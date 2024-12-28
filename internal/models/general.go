@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type NameTranslation struct {
 	Uz string `json:"uz"`
@@ -17,7 +21,10 @@ type Token struct {
 type Pagination struct {
 	Page       int `json:"page"  default:"1"`
 	Limit      int `json:"limit" default:"10"`
-	Offset     int `json:"-" default:"0"`
 	PageCount  int `json:"page_count"`
 	TotalCount int `json:"total_count"`
+}
+
+type IdResponse struct {
+	ID uuid.UUID `json:"id"`
 }

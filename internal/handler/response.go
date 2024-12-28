@@ -9,10 +9,10 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const (
-	createdMessage = "created"
-	successMessage = "success"
-)
+// const (
+// 	createdMessage = "created"
+// 	successMessage = "success"
+// )
 
 type BaseResponse struct {
 	Message string `json:"message"`

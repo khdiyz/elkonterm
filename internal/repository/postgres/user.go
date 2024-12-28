@@ -16,16 +16,16 @@ const (
 	usersTable = "users"
 )
 
-type UserRepo struct {
+type userRepo struct {
 	db     *sqlx.DB
 	logger *logger.Logger
 }
 
-func NewUserRepo(db *sqlx.DB, logger *logger.Logger) *UserRepo {
-	return &UserRepo{db, logger}
+func NewUserRepo(db *sqlx.DB, logger *logger.Logger) *userRepo {
+	return &userRepo{db, logger}
 }
 
-func (r *UserRepo) Create(input dto.CreateUser) (uuid.UUID, error) {
+func (r *userRepo) Create(input dto.CreateUser) (uuid.UUID, error) {
 	id := uuid.New()
 
 	query, args, err := sq.Insert(usersTable).
@@ -48,7 +48,7 @@ func (r *UserRepo) Create(input dto.CreateUser) (uuid.UUID, error) {
 	return id, nil
 }
 
-func (r *UserRepo) GetList(options dto.FilterOptions) ([]dto.User, int, error) {
+func (r *userRepo) GetList(options dto.FilterOptions) ([]dto.User, int, error) {
 	users := []dto.User{}
 
 	query := sq.
@@ -61,8 +61,9 @@ func (r *UserRepo) GetList(options dto.FilterOptions) ([]dto.User, int, error) {
 	filters := options.Filters
 
 	if searchKey, ok := filters["search-key"]; ok {
-		query = query.Where(sq.ILike{"(full_name || email || phone_number)": "%" + searchKey.(string) + "%"})
-		countQuery = countQuery.Where(sq.ILike{"(full_name || email || phone_number)": "%" + searchKey.(string) + "%"})
+		searchValue := "%" + searchKey.(string) + "%"
+		query = query.Where(sq.Expr("(full_name || email || phone_number) ILIKE ?", searchValue))
+		countQuery = countQuery.Where(sq.Expr("(full_name || email || phone_number) ILIKE ?", searchValue))
 	}
 
 	if status, ok := filters["status"]; ok {
@@ -116,30 +117,75 @@ func (r *UserRepo) GetList(options dto.FilterOptions) ([]dto.User, int, error) {
 	return users, totalCount, nil
 }
 
-func (r *UserRepo) GetByEmail(email string) (dto.User, error) {
-	var user dto.User
+func (r *userRepo) GetByEmail(email string) (*dto.User, error) {
+	user := &dto.User{}
 
-	query, args, err := sq.
-		Select("id, full_name, phone_number, role_id, email, password, company, status, created_at").
+	query := sq.Select("id, full_name, phone_number, role_id, email, password, company, status, created_at").
 		From(usersTable).
-		Where(sq.And{
-			sq.Eq{"email": email},
-			sq.Eq{"deleted_at": nil},
-		}).
-		PlaceholderFormat(sq.Dollar).
-		ToSql()
+		Where(sq.Eq{"email": email, "deleted_at": nil}).
+		PlaceholderFormat(sq.Dollar)
 
+	sqlQuery, args, err := query.ToSql()
 	if err != nil {
 		r.logger.Error(err)
-		return user, err
+		return nil, err
 	}
 
-	err = r.db.Get(&user, query, args...)
+	stmt, err := r.db.Prepare(sqlQuery)
+	if err != nil {
+		r.logger.Error(err)
+		return nil, err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(args...)
+	if err != nil {
+		r.logger.Error(err)
+		return nil, err
+	}
+
+	err = r.db.Get(user, sqlQuery, args...)
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			r.logger.Error(err)
 		}
-		return user, err
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (r *userRepo) GetByID(id uuid.UUID) (*dto.User, error) {
+	user := &dto.User{}
+
+	query := sq.Select("id, full_name, phone_number, role_id, email, password, company, status, created_at").
+		From(usersTable).
+		Where(sq.Eq{"id": id, "deleted_at": nil}).
+		PlaceholderFormat(sq.Dollar)
+
+	sqlQuery, args, err := query.ToSql()
+	if err != nil {
+		r.logger.Error(err)
+		return nil, err
+	}
+
+	stmt, err := r.db.Prepare(sqlQuery)
+	if err != nil {
+		r.logger.Error(err)
+		return nil, err
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(args...)
+	if err != nil {
+		r.logger.Error(err)
+		return nil, err
+	}
+
+	err = r.db.Get(user, sqlQuery, args...)
+	if err != nil {
+		r.logger.Error(err)
+		return nil, err
 	}
 
 	return user, nil

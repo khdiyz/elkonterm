@@ -109,7 +109,7 @@ func (s *authService) LoginAdmin(input models.LoginRequest) (*models.Token, *mod
 
 	roleID := user.RoleID.String()
 
-	if roleID != config.SuperAdminRoleID && roleID != config.ManagerRoleID {
+	if roleID != config.AdminRoleID && roleID != config.ManagerRoleID {
 		return nil, nil, serviceError(errWrongEmailOrPassword, codes.InvalidArgument)
 	}
 

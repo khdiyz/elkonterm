@@ -20,7 +20,7 @@ func main() {
 	defer db.Close()
 
 	// Create New Roles
-	roleSuperAdmin := "SUPER ADMIN"
+	roleAdmin := "ADMIN"
 	roleManager := "MANAGER"
 	roleClient := "CLIENT"
 
@@ -30,9 +30,9 @@ func main() {
 		name
 	) VALUES ($1, $2) ON CONFLICT (name) DO NOTHING;`
 
-	_, err = db.Exec(createRoleQuery, config.SuperAdminRoleID, roleSuperAdmin)
+	_, err = db.Exec(createRoleQuery, config.AdminRoleID, roleAdmin)
 	if err != nil {
-		logger.Fatalf("Failed to create super admin role: %v\n", err)
+		logger.Fatalf("Failed to create admin role: %v\n", err)
 	}
 
 	_, err = db.Exec(createRoleQuery, config.ManagerRoleID, roleManager)
@@ -45,19 +45,19 @@ func main() {
 		logger.Fatalf("Failed to create client role: %v\n", err)
 	}
 
-	// Create New User Super Admin
+	// Create New User Admin
 
-	userID := config.SuperAdminUserId
-	userFullName := "Super Admin"
+	userID := config.AdminUserId
+	userFullName := "Admin"
 	userPhone := "+998901234567"
-	userEmail := "superadmin@mail.ru"
+	userEmail := "admin@mail.ru"
 
-	userPassword, err := helper.GenerateHash(cfg, "superadmin")
+	userPassword, err := helper.GenerateHash(cfg, "admin")
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	createSuperAdminQuery := `
+	createAdminQuery := `
 	INSERT INTO users (
 		id,	
 		full_name,
@@ -68,9 +68,9 @@ func main() {
 	) VALUES ($1, $2, $3, $4, $5, $6)
 	ON CONFLICT (email) DO NOTHING;`
 
-	_, err = db.Exec(createSuperAdminQuery, userID, userFullName, userPhone, config.SuperAdminRoleID, userEmail, userPassword)
+	_, err = db.Exec(createAdminQuery, userID, userFullName, userPhone, config.AdminRoleID, userEmail, userPassword)
 	if err != nil {
-		logger.Fatalf("Failed to create super admin role: %v\n", err)
+		logger.Fatalf("Failed to create admin role: %v\n", err)
 	}
 
 	logger.Info("Seed completed successfully!")

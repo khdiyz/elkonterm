@@ -4,11 +4,64 @@ definitions:
       message:
         type: string
     type: object
+  handler.getCategoriesResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/models.Category'
+        type: array
+      meta:
+        $ref: '#/definitions/models.Pagination'
+    type: object
+  models.Category:
+    properties:
+      application_areas_img:
+        type: string
+      id:
+        type: string
+      is_top:
+        type: boolean
+      name:
+        $ref: '#/definitions/models.NameTranslation'
+      parent_id:
+        type: string
+      photo:
+        type: string
+      status:
+        type: boolean
+      type:
+        type: string
+    type: object
+  models.CreateCategory:
+    properties:
+      application_areas_img:
+        type: string
+      is_top:
+        type: boolean
+      name:
+        $ref: '#/definitions/models.NameTranslation'
+      parent_id:
+        type: string
+      photo:
+        type: string
+      type:
+        type: string
+    required:
+    - name
+    - type
+    type: object
+  models.IdResponse:
+    properties:
+      id:
+        type: string
+    type: object
   models.LoginRequest:
     properties:
       email:
+        default: admin@mail.ru
         type: string
       password:
+        default: admin
         type: string
     required:
     - email
@@ -20,6 +73,28 @@ definitions:
         type: string
       refresh_token:
         type: string
+    type: object
+  models.NameTranslation:
+    properties:
+      en:
+        type: string
+      ru:
+        type: string
+      uz:
+        type: string
+    type: object
+  models.Pagination:
+    properties:
+      limit:
+        default: 10
+        type: integer
+      page:
+        default: 1
+        type: integer
+      page_count:
+        type: integer
+      total_count:
+        type: integer
     type: object
 host: localhost:7070
 info:
@@ -66,6 +141,99 @@ paths:
       summary: Login Admin
       tags:
       - Auth
+  /api/v1/admin/categories:
+    get:
+      consumes:
+      - application/json
+      description: Get List Category
+      parameters:
+      - default: 1
+        description: page
+        in: query
+        name: page
+        required: true
+        type: integer
+      - default: 10
+        description: page limit
+        in: query
+        name: limit
+        required: true
+        type: integer
+      - description: search key
+        in: query
+        name: search
+        type: string
+      - description: status
+        in: query
+        name: status
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.getCategoriesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.BaseResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get List Category
+      tags:
+      - Category
+    post:
+      consumes:
+      - application/json
+      description: Create Category
+      parameters:
+      - description: Create Category
+        in: body
+        name: create
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateCategory'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.IdResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.BaseResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Create Category
+      tags:
+      - Category
 securityDefinitions:
   ApiKeyAuth:
     in: header

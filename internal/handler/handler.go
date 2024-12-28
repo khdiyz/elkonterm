@@ -40,10 +40,14 @@ func (h *Handler) InitRoutes(cfg *config.Config) *gin.Engine {
 func (h *Handler) initAdminRoutes(router *gin.Engine) {
 	router.POST("/api/v1/admin/auth/login", h.loginAdmin)
 
-	// admin := router.Group("/api/v1/admin")
-	// {
-
-	// }
+	admin := router.Group("/api/v1/admin", h.adminIdentity())
+	{
+		categories := admin.Group("/categories")
+		{
+			categories.POST("", h.createCategory)
+			categories.GET("", h.getListCategory)
+		}
+	}
 }
 
 func (h *Handler) setupSwagger(router *gin.Engine) {

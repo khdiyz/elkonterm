@@ -40,4 +40,5 @@ func serviceError(err error, code codes.Code) error {
 
 var (
 	errWrongEmailOrPassword = errors.New("incorrect email or password")
+	// errInvalidInputData     = errors.New("invalid input data")
 )
